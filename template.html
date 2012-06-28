@@ -1,0 +1,19 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>{{NAME}}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+     <img id="camImage" src="" width="{{WIDTH}}" height="{{HEIGHT}}" />
+	 <script>
+	  var socket = io.connect('http://localhost/{{SLUG}}');
+	  var image = document.getElementById("camImage");
+	  socket.on('image', function (imageBase64) {
+		image.src = "data:image/png;base64," + imageBase64;
+	  });
+	</script>
+
+  </body>
+</html>

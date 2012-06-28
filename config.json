@@ -1,0 +1,16 @@
+{
+	"webcamrc": {
+		"directory": "/tmp/.webrc_"
+	},
+	"cameras": [
+		{
+			"name": "RockyCam :)",
+			"slug": "rockycam",
+			"device": "/dev/video1",
+			"input": "sonixb",
+			"file": "/tmp/rockycam.jpeg",
+			"width": 640,
+			"height": 480
+		}
+	]
+}

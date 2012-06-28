@@ -1,0 +1,31 @@
+[grab]
+device = {{DEVICE}}
+text = "{{NAME}} %m-%d-%Y %H:%M:%S GMT"
+fg_red = 255
+fg_green = 255
+fg_blue = 255
+width = {{WIDTH}}
+height = {{HEIGHT}}
+delay = 1
+wait = 0
+input = {{INPUT}}
+#norm = pal
+rotate = 0
+top = 0
+left = 0
+bottom = -1
+right = -1
+quality = 100
+trigger = 0
+once = 0
+archive = {{FILE}}
+
+#[ftp]
+#dir = /home/ollie/extracted_images
+#file = webcam0000.jpeg
+#tmp = uploading000.jpeg
+#passive = 1
+#debug = 0
+#auto = 0
+#local = 1
+#ssh = 0
