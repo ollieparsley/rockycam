@@ -22,7 +22,6 @@ socket.connect(address);
 //Execute the watermark
 var childProcess = require("child_process");
 var command = "composite -gravity SouthWest " + watermarkPath + " " + imagePath + " " + imagePath;
-console.log("Command: ", command);
 childProcess.exec(command,
 function (error, stdout, stderr) {
 	//Open file contents
