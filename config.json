@@ -1,14 +1,33 @@
 {
-	"webcamrc": {
-		"directory": "/tmp/.webrc_"
+	"http": {
+		"port": 1337
+	},
+	"socket": {
+		"host": "192.168.1.67",
+		"port": 1338
+	},
+	"zeromq": {
+		"host": "127.0.0.1",
+		"port": 5678,
+		"protocol": "tcp"
+	},
+	"motion": {
+		"directory": "/tmp/motion"
 	},
 	"cameras": [
 		{
-			"name": "RockyCam :)",
-			"slug": "rockycam",
+			"id": "camera1",
+			"fps": 3,
+			"name": "Food and drink",
+			"device": "/dev/video0",
+			"width": 640,
+			"height": 480
+		},
+		{
+			"id": "camera2",
+			"fps": 3,
+			"name": "Wheel",
 			"device": "/dev/video1",
-			"input": "sonixb",
-			"file": "/tmp/rockycam.jpeg",
 			"width": 640,
 			"height": 480
 		}

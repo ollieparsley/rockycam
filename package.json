@@ -1,8 +1,34 @@
-/* 
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 {
-    "name": "ollie"
+	"name": "rockycam-server",
+	"version": "0.0.1",
+	"author": "Ollie Parsley <ollie@ollieparsley.com>",
+	"description": "Multiple rocky webcam server",
+	"contributors": [
+		{
+			"name": "Ollie Parsley",
+			"email": "ollie@ollieparsley.com"
+		}
+	],
+	"scripts": {
+		"start": "node ./server.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ollieparsley/rockycam.git"
+	},
+	"keywords": [
+		"rockycam",
+		"webcam",
+		"server",
+		"ollieparsley",
+		"hootware"
+	],
+	"dependencies" : {
+		"socket.io": "0.9.5",
+		"express":   "*",
+		"zeromq": "git+ssh://git@github.com:ollieparsley/zeromq.node.git"
+	},
+	"engine": {
+		"node": ">=0.4"
+	}
 }
