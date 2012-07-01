@@ -48,7 +48,8 @@ function setupTemplate(html, camera) {
 app.listen(config.http.port);
 
 //Use static files
-app.use(express.static(__dirname + '/public'));
+var maxAge = 60 * 60 * 6 * 1000; //6 hours
+app.use(express.static(__dirname + '/public', { maxAge: maxAge }));
 
 //Index page
 app.get('/', function(request, response){
@@ -73,6 +74,7 @@ app.get('/cam/:slug', function(request, response){
 	} else {
 		//Got a camera
 		var html = setupTemplate(htmlTemplate.toString("utf8"), camera);
+		response.setHeader('Cache-Control', 'max-age=' + parseInt(maxAge / 1000));
 		response.send(html);
 	}
 
