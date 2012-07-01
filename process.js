@@ -25,12 +25,6 @@ var command = "composite -gravity SouthWest " + watermarkPath + " " + imagePath 
 console.log("Command: ", command);
 childProcess.exec(command,
 function (error, stdout, stderr) {
-	console.log('stdout: ' + stdout);
-	console.log('stderr: ' + stderr);
-	if (error !== null) {
-		console.log('exec error: ' + error);
-	}
-
 	//Open file contents
 	var image = fs.readFileSync(imagePath);
 
