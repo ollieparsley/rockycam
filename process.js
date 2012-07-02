@@ -20,11 +20,12 @@ var address = config.zeromq.protocol + '://' + config.zeromq.host + ':' + config
 socket.connect(address);
 
 //Execute the watermark
-var childProcess = require("child_process");
+/*var childProcess = require("child_process");
 var command = "composite -gravity SouthWest " + watermarkPath + " " + imagePath + " " + imagePath;
 childProcess.exec(command,
 function (error, stdout, stderr) {
 	//Open file contents
+	*/
 	var image = fs.readFileSync(imagePath);
 
 	//Broadcast
@@ -35,11 +36,11 @@ function (error, stdout, stderr) {
 
 	//Delete the original file
 	fs.unlinkSync(imagePath);
-
+/*
 });
-
+*/
 //Kill self
 setTimeout(function(){
 	process.kill(process.pic, "SIGKILL");
-}, 300);
+}, 1000);
 
