@@ -25,7 +25,8 @@
 	],
 	"dependencies" : {
 		"socket.io": "0.9.5",
-		"express":   "*",
+		"express": "*",
+		"connect": "*",
 		"zeromq": "git+ssh://git@github.com:ollieparsley/zeromq.node.git"
 	},
 	"engine": {
