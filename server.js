@@ -121,7 +121,7 @@ config.cameras.forEach(function(camera){
 			console.log("Written " + camera.name + " motion config file");
 			
 			//Spawn worker
-			camera.process = childProcess.spawn('sudo', ["motion", "-c", path]);
+			camera.process = childProcess.spawn('motion', ["-c", path]);
 			camera.process.stdout.on("data", function(data){
 				console.log(camera.name + " stdout : " + data.toString());
 			});
