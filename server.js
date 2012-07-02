@@ -82,7 +82,11 @@ app.get('/cam/:slug', function(request, response){
 });
 
 //Load template
-var motionTemplate = fs.readFileSync(__dirname + "/motion.conf");
+var motionThreads = "";
+var motionConfigTemplate = fs.readFileSync(__dirname + "/motion.conf");
+var motionThreadTemplate = fs.readFileSync(__dirname + "/motion_template.conf");
+
+//Update the config
 
 //Load html template
 var htmlTemplate = fs.readFileSync(__dirname + "/template.html");
@@ -91,7 +95,7 @@ var htmlIndexTemplate = fs.readFileSync(__dirname + "/template_index.html");
 //Spawn each video capture
 config.cameras.forEach(function(camera){
 	//Create file
-	var motionConfig = motionTemplate.toString("utf8");
+	var motionConfig = motionThreadTemplate.toString("utf8");
 	motionConfig = motionConfig.replace(/\{\{DEVICE\}\}/ig, camera.device);
 	motionConfig = motionConfig.replace(/\{\{ID}}/ig, camera.id);
 	motionConfig = motionConfig.replace(/\{\{ROOT}}/ig, __dirname);
@@ -113,26 +117,46 @@ config.cameras.forEach(function(camera){
 	});
 
 	//Output to file path
-	var path = config.motion.directory + "motion_" + camera.id + ".conf";
+	var path = config.motion.directory + "_" + camera.id + ".conf";
+
+	//Append to threads
+	motionThreads += "thread " + path + "\r\n";
+
+	//Write config file
 	fs.writeFile(path, motionConfig, function(error){
 		if (error) {
 			console.log("Error with " + camera.name + ": ", error.stack);
 		} else {
 			console.log("Written " + camera.name + " motion config file");
-			
-			//Spawn worker
-			camera.process = childProcess.spawn('motion', ["-c", path]);
-			camera.process.stdout.on("data", function(data){
-				console.log(camera.name + " stdout : " + data.toString());
-			});
-			camera.process.stderr.on("data", function(data){
-				console.log(camera.name + " stderr : " + data.toString());
-			});
 		}
-
 	});
 
 });
+
+//For each camera loop and add to main config
+//Then spawn motion once
+//Spawn worker
+var mainMotionConfig = motionConfigTemplate.toString("utf8");
+mainMotionConfig = mainMotionConfig.replace('{{THREADS}}', motionThreads);
+var mainMotionConfigPath = config.motion.directory + "_main.conf";
+setTimeout(function(){
+	//Write config file
+	fs.writeFile(mainMotionConfigPath, mainMotionConfig, function(error){
+		if (error) {
+			console.log("Error with main config: ", error.stack);
+		} else {
+			console.log("Written main motion config file");
+			var motionProcess = childProcess.spawn('motion', ["-c", mainMotionConfigPath]);
+			motionProcess.stdout.on("data", function(data){
+				console.log("Motion stdout : " + data.toString());
+			});
+			motionProcess.stderr.on("data", function(data){
+				console.log("Motion stderr : " + data.toString());
+			});
+
+		}
+	});
+}, 2000);
 
 var socket = zmq.createSocket('pull');
 

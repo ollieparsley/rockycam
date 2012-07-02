@@ -26,6 +26,7 @@ childProcess.exec(command,
 function (error, stdout, stderr) {
 	//Open file contents
 	*/
+   try {
 	var image = fs.readFileSync(imagePath);
 
 	//Broadcast
@@ -36,6 +37,9 @@ function (error, stdout, stderr) {
 
 	//Delete the original file
 	fs.unlinkSync(imagePath);
+   } catch(e) {
+	   
+   }
 /*
 });
 */
