@@ -3,33 +3,30 @@
 		"port": 1337
 	},
 	"socket": {
-		"host": "192.168.1.67",
+		"host": "rockycam.ollieparsley.com",
 		"port": 1338
-	},
-	"zeromq": {
-		"host": "127.0.0.1",
-		"port": 5678,
-		"protocol": "tcp"
 	},
 	"motion": {
 		"directory": "/tmp/motion"
 	},
 	"cameras": [
 		{
-			"id": "camera1",
-			"fps": 3,
-			"name": "Food and drink",
+			"id": 1,
+			"fps": 4,
+			"name": "Upstairs",
 			"device": "/dev/video0",
-			"width": 640,
-			"height": 480
+			"palette": "6",
+			"width": 320,
+			"height": 240
 		},
 		{
-			"id": "camera2",
-			"fps": 3,
-			"name": "Wheel",
+			"id": 2,
+			"fps": 4,
+			"name": "Downstairs",
 			"device": "/dev/video1",
-			"width": 640,
-			"height": 480
+			"palette": "8",
+			"width": 320,
+			"height": 240
 		}
 	]
 }

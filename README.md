@@ -1,4 +1,6 @@
-rockycam
+RockyCam
 ========
 
-A node web server showing live images of Rocky our hamsters' cage
+cameras that are monitoring Rocky, our hamster.
+
+This is all made using a Raspberry Pi, Node.JS, Motion, DataSift and some old webcams.

@@ -2,7 +2,6 @@ var childProcess = require("child_process");
 var fs = require("fs");
 var http = require('http');
 var express = require("express");
-var zmq = require("zmq-3.0");
 
 //Load the config
 var config = require("./config.json");
@@ -12,6 +11,7 @@ console.log(config);
 var app = express.createServer();
 var io = require('socket.io').listen(1338);
 io.set('log level', 1);
+io.set('transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
 
 function setupTemplate(html, camera) {
 	html = html.replace(/\{\{HOST\}\}/ig, config.socket.host);
@@ -33,7 +33,7 @@ function setupTemplate(html, camera) {
 			cameraIdsArray += ','
 		}
 		cameraIdsArray += "'" + camera.id + "'";
-		camerasLi += '<li><h2><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></h2><img id="camera_' + camera.id + '" src="" /></li>';
+		camerasLi += '<li><h2><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></h2><div class="cameraSurround"><img class="camera" id="camera_' + camera.id + '" src="" /><img class="watermark" src="/images/watermark.png" /></div></li>';
 		camerasNav += '<li><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></li>';
 		count++;
 	});
@@ -83,103 +83,100 @@ app.get('/cam/:slug', function(request, response){
 
 //Load template
 var motionThreads = "";
-var motionConfigTemplate = fs.readFileSync(__dirname + "/motion.conf");
-var motionThreadTemplate = fs.readFileSync(__dirname + "/motion_template.conf");
-
-//Update the config
+var motionConfigTemplate = fs.readFileSync(__dirname + "/motion/motion.conf");
 
 //Load html template
-var htmlTemplate = fs.readFileSync(__dirname + "/template.html");
-var htmlIndexTemplate = fs.readFileSync(__dirname + "/template_index.html");
+var htmlTemplate = fs.readFileSync(__dirname + "/templates/cam.html");
+var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
 
 //Spawn each video capture
 config.cameras.forEach(function(camera){
-	//Create file
-	var motionConfig = motionThreadTemplate.toString("utf8");
-	motionConfig = motionConfig.replace(/\{\{DEVICE\}\}/ig, camera.device);
-	motionConfig = motionConfig.replace(/\{\{ID}}/ig, camera.id);
-	motionConfig = motionConfig.replace(/\{\{ROOT}}/ig, __dirname);
-	motionConfig = motionConfig.replace(/\{\{WIDTH}}/ig, camera.width);
-	motionConfig = motionConfig.replace(/\{\{HEIGHT\}\}/ig, camera.height);
-	motionConfig = motionConfig.replace(/\{\{FPS\}\}/ig, camera.fps);
+	
+	setTimeout(function(){
 
-	//Set a camera image holding
-	camera.image = null;
+		//Create file
+		var directory = config.motion.directory + '_' + camera.id;
+		var motionConfig = motionConfigTemplate.toString("utf8");
+		motionConfig = motionConfig.replace(/\{\{DEVICE\}\}/ig, camera.device);
+		motionConfig = motionConfig.replace(/\{\{ID}}/ig, camera.id);
+		motionConfig = motionConfig.replace(/\{\{DIRECTORY}}/ig, directory);
+		motionConfig = motionConfig.replace(/\{\{WIDTH}}/ig, camera.width);
+		motionConfig = motionConfig.replace(/\{\{HEIGHT\}\}/ig, camera.height);
+		motionConfig = motionConfig.replace(/\{\{FPS\}\}/ig, camera.fps);
+		motionConfig = motionConfig.replace(/\{\{PALETTE\}\}/ig, camera.palette);
 
-	//Camera process
-	camera.process = null;
+		//Set a camera image holding
+		camera.image = null;
 
-	//Listen for new socket connections
-	io.of('/' + camera.id).on('connection', function (socket) {
-		if (camera.image !== null) {
-			socket.emit('image', camera.image.toString("base64"));
-		}
-	});
+		//Camera process
+		camera.process = null;
 
-	//Output to file path
-	var path = config.motion.directory + "_" + camera.id + ".conf";
+		//Listen for new socket connections
+		io.of('/' + camera.id).on('connection', function (socket) {
+			if (camera.image !== null) {
+				socket.emit('image', camera.image.toString("base64"));
+			}
+		});
 
-	//Append to threads
-	motionThreads += "thread " + path + "\r\n";
+		//Output to file path
+		var path = config.motion.directory + "_" + camera.id + ".conf";
 
-	//Write config file
-	fs.writeFile(path, motionConfig, function(error){
-		if (error) {
-			console.log("Error with " + camera.name + ": ", error.stack);
-		} else {
-			console.log("Written " + camera.name + " motion config file");
-		}
-	});
+		//Write config file
+		fs.writeFile(path, motionConfig, function(error){
+			if (error) {
+				console.log("Error with " + camera.name + ": ", error.stack);
+			} else {
+				console.log("Written " + camera.name + " motion config file");
 
+				console.log("Spawning " + camera.name + " motion process");
+
+				//Regex
+				var regex = new RegExp("(" + directory.toString().replace("/", "\/") + "\/.*\.jpg)" ,"igm");
+
+				//Start a new child motion process
+				camera.process = childProcess.spawn('motion', ["-c", path]);
+				camera.process.stdout.on("data", function(data){
+					//Process the stdout messages
+					console.log("Motion stdout : " + data.toString());
+				});
+				camera.process.stderr.on("data", function(data){
+					//(\/tmp\/motion\/.*\.jpg)
+					try {
+						var matches = regex.exec(data.toString("utf8"));
+						if (matches !== null && matches.length !== undefined && matches.length > 0) {
+
+							//Image path
+							var imagePath = matches[0];
+
+							//Read the file
+							console.log("Reading: " + imagePath);
+							fs.readFile(imagePath, function(error, data){
+								if (error) {
+									console.log("Error reading file " + imagePath, error.message, error.stack);
+								} else {
+									//Store camera image
+									camera.image = data;
+
+									//Send to client
+									io.of('/' + camera.id).emit('image', camera.image.toString("base64"));
+
+									//Delete the original file
+									fs.unlinkSync(imagePath);
+
+								}
+							});
+						} else {
+							console.log("Motion stderr null: " + data.toString("utf8"));
+						}
+					} catch (e) {
+						console.log("Motion stderr exception: " + data.toString("utf8"));
+					}
+
+				});
+
+			}
+		});
+	
+	}, (30000 * (camera.id - 1)));
+	
 });
-
-//For each camera loop and add to main config
-//Then spawn motion once
-//Spawn worker
-var mainMotionConfig = motionConfigTemplate.toString("utf8");
-mainMotionConfig = mainMotionConfig.replace('{{THREADS}}', motionThreads);
-var mainMotionConfigPath = config.motion.directory + "_main.conf";
-setTimeout(function(){
-	//Write config file
-	fs.writeFile(mainMotionConfigPath, mainMotionConfig, function(error){
-		if (error) {
-			console.log("Error with main config: ", error.stack);
-		} else {
-			console.log("Written main motion config file");
-			var motionProcess = childProcess.spawn('motion', ["-c", mainMotionConfigPath]);
-			motionProcess.stdout.on("data", function(data){
-				console.log("Motion stdout : " + data.toString());
-			});
-			motionProcess.stderr.on("data", function(data){
-				console.log("Motion stderr : " + data.toString());
-			});
-
-		}
-	});
-}, 2000);
-
-var socket = zmq.createSocket('pull');
-
-//Connect to receive messages
-var address = config.zeromq.protocol + '://*:' + config.zeromq.port;
-socket.bindSync(address);
-console.log("[ZMQ] Binded to " + address);
-socket.on('message', function(cameraId, imageContent) {
-	//Find camera
-	var camera = false;
-	config.cameras.forEach(function(cam){
-		if (cam.id == cameraId) {
-			camera = cam;
-		}
-	});
-
-	//Got a camera
-	if (camera) {
-		//Get image content
-		camera.image = imageContent;
-		
-		//Broadcast
-		io.of('/' + camera.id).emit('image', camera.image.toString("base64"));
-	}
-});
-

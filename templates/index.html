@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-    <title>RockyCam | {{NAME}} camera</title>
+    <title>RockyCam | Welcome</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<script src="http://{{HOST}}:{{PORT}}/socket.io/socket.io.js"></script>
 	<link rel="stylesheet" href="/styles/default.css" />
@@ -11,28 +11,29 @@
 			<a href="/"><img id="logo" src="/images/logo.png" alt="RockyCam" /></a>
 		</div>
 		<div id="content">
-			<h1>{{NAME}} camera</h1>
+			<h1>Welcome to RockyCam!</h1>
 
-			<ul id="nav">
-				{{CAMERAS_NAV}}
+			<p>Below are some cameras that are monitoring Rocky, our hamster.</p>
+			<p>This is all made using a Raspberry Pi, Node.JS, Motion, DataSift and some old webcams.</p>
+			<ul id="cameras">
+				{{CAMERAS}}
 			</ul>
-
-			<div class="imageSurround">
-				<img id="camImage" src="" width="640" height="480" />
-			</div>
 		</div>
 		<div id="footer">
 			<p>Created by <a href="http://ollieparsley.com">Ollie Parsley</a>, logo by Hannah Waltham and our hamster Rocky :)</p>
 		</div>
 		<script>
-			var socket = io.connect('http://{{HOST}}:{{PORT}}/{{ID}}');
-			var image = document.getElementById("camImage");
-			socket.on('image', function (imageBase64) {
-			image.src = "data:image/png;base64," + imageBase64;
-		});
+			[{{CAMERAS_ARRAY}}].forEach(function(cameraId){
+				var socket = io.connect('http://{{HOST}}:{{PORT}}/' + cameraId);
+				var image = document.getElementById("camera_" + cameraId);
+				socket.on('image', function (imageBase64) {
+					image.src = "data:image/jpg;base64," + imageBase64;
+				});
+			});
 		</script>
 
-  <script type="text/javascript">
+
+<script type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-276472-28']);
