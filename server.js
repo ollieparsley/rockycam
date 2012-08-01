@@ -5,7 +5,6 @@ var express = require("express");
 
 //Load the config
 var config = require("./config.json");
-console.log(config);
 
 //Create app server
 var app = express.createServer();
@@ -13,6 +12,18 @@ var io = require('socket.io').listen(1338);
 io.set('log level', 1);
 io.set('transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
 
+//Templates
+var htmlHeader = fs.readFileSync(__dirname + "/templates/header.html");
+var htmlFooter = fs.readFileSync(__dirname + "/templates/footer.html");
+var htmlTemplate = fs.readFileSync(__dirname + "/templates/cam.html");
+var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
+
+/**
+ * Set up the templates
+ * 
+ * @param string html   The HTML contents
+ * @param object camera (optional) The camera
+ */
 function setupTemplate(html, camera) {
 	html = html.replace(/\{\{HOST\}\}/ig, config.socket.host);
 	html = html.replace(/\{\{PORT\}\}/ig, config.socket.port);
@@ -41,19 +52,22 @@ function setupTemplate(html, camera) {
 	html = html.replace(/\{\{CAMERAS_NAV\}\}/ig, camerasNav);
 	html = html.replace(/\{\{CAMERAS_ARRAY\}\}/ig, cameraIdsArray);
 
-	return html;
+	return htmlHeader + "\n\n" + html + "\n\n" + htmlFooter;
 }
 
 //Listen on http port
 app.listen(config.http.port);
 
 //Use static files
-var maxAge = 60 * 60 * 6 * 1000; //6 hours
+var maxAge = config.cache.max_age * 1000; //6 hours
 app.use(express.static(__dirname + '/public', { maxAge: maxAge }));
 
 //Index page
 app.get('/', function(request, response){
 	var html = setupTemplate(htmlIndexTemplate.toString("utf8"));
+	if (config.cache.enabled) {
+		response.setHeader('Cache-Control', 'max-age=' + parseInt(maxAge / 1000));
+	}
 	response.send(html);
 });
 
@@ -68,26 +82,22 @@ app.get('/cam/:slug', function(request, response){
 
 	//Check for no camera
 	if (camera === false) {
-		//Redirect
-		response.redirect('/');
-
-	} else {
-		//Got a camera
-		var html = setupTemplate(htmlTemplate.toString("utf8"), camera);
-		response.setHeader('Cache-Control', 'max-age=' + parseInt(maxAge / 1000));
-		response.send(html);
+		return response.redirect('/');
 	}
-
+	
+	//Got a camera
+	var html = setupTemplate(htmlTemplate.toString("utf8"), camera);
+	if (config.cache.enabled) {
+		response.setHeader('Cache-Control', 'max-age=' + parseInt(maxAge / 1000));
+	}
+	response.send(html);
+	
 	return;
 });
 
 //Load template
 var motionThreads = "";
 var motionConfigTemplate = fs.readFileSync(__dirname + "/motion/motion.conf");
-
-//Load html template
-var htmlTemplate = fs.readFileSync(__dirname + "/templates/cam.html");
-var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
 
 //Spawn each video capture
 config.cameras.forEach(function(camera){
