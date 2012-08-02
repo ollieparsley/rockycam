@@ -4,6 +4,15 @@
 	{{CAMERAS_NAV}}
 </ul>
 
-<div class="imageSurround">
+<div class="singleSurround">
 	{{CAMERA_IMAGE}}
 </div>
+
+<script>
+	var cameraId = '{{ID}}';
+	var socket = io.connect('http://{{HOST}}:{{PORT}}/' + cameraId);
+	var image = document.getElementById("camera_" + cameraId);
+	socket.on('image', function (imageBase64) {
+		image.src = "data:image/jpeg;base64," + imageBase64;
+	});
+</script>

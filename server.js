@@ -27,6 +27,7 @@ var htmlHeader = fs.readFileSync(__dirname + "/templates/header.html");
 var htmlFooter = fs.readFileSync(__dirname + "/templates/footer.html");
 var htmlCamera = fs.readFileSync(__dirname + "/templates/camera.html");
 var htmlSponsor = fs.readFileSync(__dirname + "/templates/sponsor.html");
+var htmlAbout = fs.readFileSync(__dirname + "/templates/about.html");
 var htmlTemplate = fs.readFileSync(__dirname + "/templates/cam.html");
 var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
 
@@ -40,10 +41,6 @@ function setupTemplate(html, camera) {
 	
 	//Replace any camera placeholders
 	html = html.replace(/\{\{CAMERA_IMAGE\}\}/ig, htmlCamera);
-	
-	//Replace socket host+port
-	html = html.replace(/\{\{HOST\}\}/ig, config.socket.host);
-	html = html.replace(/\{\{PORT\}\}/ig, config.socket.port);
 
 	//Any camera items
 	if (camera !== undefined) {
@@ -86,7 +83,6 @@ function setupTemplate(html, camera) {
 			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_NAME\}\}/ig, camera.sponsor.name);
 			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_DESCRIPTION\}\}/ig, camera.sponsor.description);
 			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_LINK\}\}/ig, camera.sponsor.link);
-			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_ICON\}\}/ig, camera.sponsor.icon);
 		}
 		
 		camerasLi += '<li><h2><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></h2>' + cameraHtml + '</li>';
@@ -96,8 +92,14 @@ function setupTemplate(html, camera) {
 	html = html.replace(/\{\{CAMERAS\}\}/ig, camerasLi);
 	html = html.replace(/\{\{CAMERAS_NAV\}\}/ig, camerasNav);
 	html = html.replace(/\{\{CAMERAS_ARRAY\}\}/ig, cameraIdsArray);
+	
+	html = htmlHeader + "\n\n" + html + "\n\n" + htmlFooter;
+	
+	//Replace socket host+port
+	html = html.replace(/\{\{HOST\}\}/ig, config.socket.host);
+	html = html.replace(/\{\{PORT\}\}/ig, config.socket.port);
 
-	return htmlHeader + "\n\n" + html + "\n\n" + htmlFooter;
+	return html;
 }
 
 //Listen on http port
@@ -106,6 +108,12 @@ app.listen(config.http.port);
 //Index page
 app.get('/', function(request, response){
 	var html = setupTemplate(htmlIndexTemplate.toString("utf8"));
+	return response.send(html);
+});
+
+//About page
+app.get('/about', function(request, response){
+	var html = setupTemplate(htmlAbout.toString("utf8"));
 	return response.send(html);
 });
 
@@ -174,9 +182,6 @@ config.cameras.forEach(function(camera){
 
 				console.log("Spawning " + camera.name + " motion process");
 
-				//Regex
-				var regex = new RegExp("(" + directory.toString().replace("/", "\/") + "\/.*\.jpg)" ,"igm");
-
 				//Start a new child motion process
 				camera.process = childProcess.spawn('motion', ["-c", path]);
 				camera.process.stdout.on("data", function(data){
@@ -184,16 +189,18 @@ config.cameras.forEach(function(camera){
 					console.log("Motion stdout : " + data.toString());
 				});
 				camera.process.stderr.on("data", function(data){
-					//(\/tmp\/motion\/.*\.jpg)
+					//Regex
+					var regex = new RegExp("(" + directory.toString().replace("/", "\/") + "\/)(.*)(\.jpg)" ,"igm");
+
 					try {
 						var matches = regex.exec(data.toString("utf8"));
+						
 						if (matches !== null && matches.length !== undefined && matches.length > 0) {
 
 							//Image path
 							var imagePath = matches[0];
 
 							//Read the file
-							console.log("Reading: " + imagePath);
 							fs.readFile(imagePath, function(error, data){
 								if (error) {
 									console.log("Error reading file " + imagePath, error.message, error.stack);
@@ -206,7 +213,6 @@ config.cameras.forEach(function(camera){
 
 									//Delete the original file
 									fs.unlinkSync(imagePath);
-
 								}
 							});
 						} else {
@@ -215,7 +221,6 @@ config.cameras.forEach(function(camera){
 					} catch (e) {
 						console.log("Motion stderr exception: " + data.toString("utf8"));
 					}
-
 				});
 
 			}

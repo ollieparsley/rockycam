@@ -2,7 +2,7 @@
 	"cache": {
 		"enabled": false,
 		"max_age": 3600
-	}
+	},
 	"http": {
 		"port": 1337
 	},
@@ -16,27 +16,31 @@
 	"cameras": [
 		{
 			"id": 1,
-			"fps": 4,
-			"name": "Upstairs",
-			"device": "/dev/video0",
+			"fps": 2,
+			"name": "Top level",
+			"device": "/dev/video1",
 			"palette": "6",
 			"width": 320,
-			"height": 240
+			"height": 240,
 			"sponsor": {
-				"name": "Hootware",
-				"description": "Social media based application development",
-				"link": "http://hootware.com/?reg=rockycam",
-				"icon": "/images/sponsor/hootware_icon.png"
+				"name": "Sponsored by Hootware",
+				"description": "Bespoke web application development",
+				"link": "http://hootware.com/?reg=rockycam"
 			}
 		},
 		{
 			"id": 2,
-			"fps": 4,
-			"name": "Downstairs",
-			"device": "/dev/video1",
+			"fps": 2,
+			"name": "Bottom level",
+			"device": "/dev/video0",
 			"palette": "8",
 			"width": 320,
-			"height": 240
+			"height": 240,
+			"sponsor": {
+				"name": "Sponsor this camera",
+				"description": "Sponsor this bottom level camera",
+				"link": "mailto:rockycam@hootware.com?subject=RockyCam%20camera%20sponsorship"
+			}
 		}
 	]
 }
