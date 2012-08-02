@@ -6,8 +6,18 @@ var express = require("express");
 //Load the config
 var config = require("./config.json");
 
-//Create app server
+//Express
 var app = express.createServer();
+app.use(function(request, response, next) {
+    if (config.cache.enabled) {
+		response.setHeader('Cache-Control', 'max-age=' + parseInt(config.cache.max_age * 1000 / 1000));
+	}
+	next();
+});
+app.use(app.router);
+app.use(express.static(__dirname + '/public'));
+
+//Socket.io
 var io = require('socket.io').listen(1338);
 io.set('log level', 1);
 io.set('transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
@@ -15,6 +25,7 @@ io.set('transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
 //Templates
 var htmlHeader = fs.readFileSync(__dirname + "/templates/header.html");
 var htmlFooter = fs.readFileSync(__dirname + "/templates/footer.html");
+var htmlCamera = fs.readFileSync(__dirname + "/templates/camera.html");
 var htmlTemplate = fs.readFileSync(__dirname + "/templates/cam.html");
 var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
 
@@ -25,9 +36,15 @@ var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
  * @param object camera (optional) The camera
  */
 function setupTemplate(html, camera) {
+	
+	//Replace any camera placeholders
+	html = html.replace(/\{\{CAMERA_IMAGE\}\}/ig, htmlCamera);
+	
+	//Replace socket host+port
 	html = html.replace(/\{\{HOST\}\}/ig, config.socket.host);
 	html = html.replace(/\{\{PORT\}\}/ig, config.socket.port);
 
+	//Any camera items
 	if (camera !== undefined) {
 		html = html.replace(/\{\{WIDTH\}\}/ig, camera.width);
 		html = html.replace(/\{\{HEIGHT\}\}/ig, camera.height);
@@ -35,6 +52,7 @@ function setupTemplate(html, camera) {
 		html = html.replace(/\{\{NAME\}\}/ig, camera.name);
 	}
 
+	//Camera lists and navigation
 	var camerasLi = '';
 	var camerasNav = '';
 	var cameraIdsArray = '';
@@ -44,7 +62,13 @@ function setupTemplate(html, camera) {
 			cameraIdsArray += ','
 		}
 		cameraIdsArray += "'" + camera.id + "'";
-		camerasLi += '<li><h2><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></h2><div class="cameraSurround"><img class="camera" id="camera_' + camera.id + '" src="" /><img class="watermark" src="/images/watermark.png" /></div></li>';
+		
+		//Get the camera HTML
+		var cameraHtml = htmlCamera.toString("utf8");
+		cameraHtml = cameraHtml.replace(/\{\{ID\}\}/ig, camera.id);
+		cameraHtml = cameraHtml.replace(/\{\{NAME\}\}/ig, camera.name);
+		
+		camerasLi += '<li><h2><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></h2>' + cameraHtml + '</li>';
 		camerasNav += '<li><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></li>';
 		count++;
 	});
@@ -58,17 +82,10 @@ function setupTemplate(html, camera) {
 //Listen on http port
 app.listen(config.http.port);
 
-//Use static files
-var maxAge = config.cache.max_age * 1000; //6 hours
-app.use(express.static(__dirname + '/public', { maxAge: maxAge }));
-
 //Index page
 app.get('/', function(request, response){
 	var html = setupTemplate(htmlIndexTemplate.toString("utf8"));
-	if (config.cache.enabled) {
-		response.setHeader('Cache-Control', 'max-age=' + parseInt(maxAge / 1000));
-	}
-	response.send(html);
+	return response.send(html);
 });
 
 app.get('/cam/:slug', function(request, response){
@@ -87,12 +104,8 @@ app.get('/cam/:slug', function(request, response){
 	
 	//Got a camera
 	var html = setupTemplate(htmlTemplate.toString("utf8"), camera);
-	if (config.cache.enabled) {
-		response.setHeader('Cache-Control', 'max-age=' + parseInt(maxAge / 1000));
-	}
-	response.send(html);
 	
-	return;
+	return response.send(html);
 });
 
 //Load template

@@ -58,7 +58,38 @@ html, body {
 
 h1 {
 	text-align:center;
-	font-family: "Frijole", Arial, Helvetica;
+	font-family:"Frijole", Arial, Helvetica;
+	font-weight:normal;
+}
+
+/* All camera surrounds */
+div.cameraSurround{
+	width:640px;
+	height:480px;
+	position:relative;
+}
+
+/* All camera surround watermarks*/
+div.cameraSurround img.watermark{
+	width:160px;
+	position:absolute;
+	bottom:3px;
+	left:3px;
+}
+
+/* Front page camera surround */
+#cameras li div.cameraSurround{
+	width:320px;
+	height:240px;
+}
+
+#cameras li div.cameraSurround img.camera{
+	width:320px;
+	height:240px;
+}
+
+#cameras li div.cameraSurround img.watermark{
+	width:80px;
 }
 
 #content p {
@@ -83,16 +114,6 @@ h1 {
 	font-size:18px;
 	color:#3469a5;
 	text-decoration:none;
-}
-
-#cameras li div.cameraSurround{
-	width:320px;
-	height:240px;
-}
-
-#cameras li div.cameraSurround img.camera{
-	width:320px;
-	height:240px;
 }
 
 #content .imageSurround {
