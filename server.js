@@ -26,6 +26,7 @@ io.set('transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
 var htmlHeader = fs.readFileSync(__dirname + "/templates/header.html");
 var htmlFooter = fs.readFileSync(__dirname + "/templates/footer.html");
 var htmlCamera = fs.readFileSync(__dirname + "/templates/camera.html");
+var htmlSponsor = fs.readFileSync(__dirname + "/templates/sponsor.html");
 var htmlTemplate = fs.readFileSync(__dirname + "/templates/cam.html");
 var htmlIndexTemplate = fs.readFileSync(__dirname + "/templates/index.html");
 
@@ -50,6 +51,17 @@ function setupTemplate(html, camera) {
 		html = html.replace(/\{\{HEIGHT\}\}/ig, camera.height);
 		html = html.replace(/\{\{ID\}\}/ig, camera.id);
 		html = html.replace(/\{\{NAME\}\}/ig, camera.name);
+		
+		//Sponsorship
+		if (camera.sponsor == undefined) {
+			html = html.replace(/\{\{SPONSOR\}\}/ig, '');
+		} else {
+			html = html.replace(/\{\{SPONSOR\}\}/ig, htmlSponsor.toString("utf8"));
+			html = html.replace(/\{\{SPONSOR_NAME\}\}/ig, camera.sponsor.name);
+			html = html.replace(/\{\{SPONSOR_DESCRIPTION\}\}/ig, camera.sponsor.description);
+			html = html.replace(/\{\{SPONSOR_LINK\}\}/ig, camera.sponsor.link);
+			html = html.replace(/\{\{SPONSOR_ICON\}\}/ig, camera.sponsor.icon);
+		}
 	}
 
 	//Camera lists and navigation
@@ -67,6 +79,15 @@ function setupTemplate(html, camera) {
 		var cameraHtml = htmlCamera.toString("utf8");
 		cameraHtml = cameraHtml.replace(/\{\{ID\}\}/ig, camera.id);
 		cameraHtml = cameraHtml.replace(/\{\{NAME\}\}/ig, camera.name);
+		if (camera.sponsor === undefined) {
+			cameraHtml = cameraHtml.replace(/\{\{SPONSOR\}\}/ig, '');
+		} else {
+			cameraHtml = cameraHtml.replace(/\{\{SPONSOR\}\}/ig, htmlSponsor.toString("utf8"));
+			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_NAME\}\}/ig, camera.sponsor.name);
+			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_DESCRIPTION\}\}/ig, camera.sponsor.description);
+			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_LINK\}\}/ig, camera.sponsor.link);
+			cameraHtml = cameraHtml.replace(/\{\{SPONSOR_ICON\}\}/ig, camera.sponsor.icon);
+		}
 		
 		camerasLi += '<li><h2><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></h2>' + cameraHtml + '</li>';
 		camerasNav += '<li><a href="/cam/' + camera.id + '">' + camera.name + ' camera</a></li>';

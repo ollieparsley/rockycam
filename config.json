@@ -22,6 +22,12 @@
 			"palette": "6",
 			"width": 320,
 			"height": 240
+			"sponsor": {
+				"name": "Hootware",
+				"description": "Social media based application development",
+				"link": "http://hootware.com/?reg=rockycam",
+				"icon": "/images/sponsor/hootware_icon.png"
+			}
 		},
 		{
 			"id": 2,
