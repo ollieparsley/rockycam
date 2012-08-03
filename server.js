@@ -6,6 +6,12 @@ var express = require("express");
 //Load the config
 var config = require("./config.json");
 
+//Motion detection
+var motionDetection = {
+	updatedAt: 0,
+	cameras: {}
+};
+
 //Express
 var app = express.createServer();
 app.use(function(request, response, next) {
@@ -226,6 +232,71 @@ config.cameras.forEach(function(camera){
 			}
 		});
 	
-	}, (30000 * (camera.id - 1)));
+	}, (15000 * (camera.id - 1)));
 	
 });
+
+//Connect to receive messages
+var socket = zmq.createSocket('pull');
+var address = config.zeromq.protocol + '://*:' + config.zeromq.port;
+socket.bindSync(address);
+console.log("[ZMQ] Binded to " + address);
+socket.on('message', function(action, data) {
+	//Decode data
+	data = JSON.parse(data);
+	
+	//Find camera
+	var camera = false;
+	if (data.cameraId !== undefined) {
+		config.cameras.forEach(function(cam){
+			if (cam.id == data.cameraId) {
+				camera = cam;
+			}
+		});
+	}
+	
+	//Check the action
+	if (action == 'detection' && camera !== false) {
+		updateMotionDetection(camera, data.detection == 'start' ? true : false);
+	}
+});
+
+function updateMotionDetection(camera, detected) {
+	
+	
+	//Have we detected anything?
+	var currentDetectionCount = Object.keys(motionDetection.cameras).length;
+	var currentDetected = currentDetectionCount > 0;
+	
+	//Add the camera
+	if (detected) {
+		motionDetection.cameras[camera.id.toString()] = camera;
+	} else {
+		delete motionDetection.cameras[camera.id.toString()];
+	}
+	
+	//New detection state
+	var newDetectionCount = Object.keys(motionDetection.cameras).length;
+	var newDetected = newDetectionCount > 0;
+	
+	//We can now check for change
+	if (newDetected === true && currentDetected === false) {
+		//We are now detecting motion
+		//UPDATE SITE!
+		
+		//Only tweet if we haven't changed state in an hour
+		if (new Date().getTime() > motionDetection.updatedAt + (60 * 60 * 1000) ) {
+			//TWEET!
+		}
+		
+	} else if (newDetected === false && currentDetected === true) {
+		//We have stopped detecting motion
+		//UPDATE!
+		
+		//Only tweet if we haven't changed state in 2mins
+		if (new Date().getTime() > motionDetection.updatedAt + (2 * 60 * 1000) ) {
+			//TWEET!
+		}
+	}
+	
+}
