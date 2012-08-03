@@ -12,6 +12,15 @@ var motionDetection = {
 	cameras: {}
 };
 
+//Include twitter
+var Twitter = require("./lib/twitter.js");
+var twitter = new Twitter({
+	consumerKey: config.twitter.consumer_key,
+	consumerSecret: config.twitter.consumer_secret,
+	accessToken: config.twitter.access_token,
+	accessTokenSecret: config.twitter.access_token_secret
+});
+
 //Express
 var app = express.createServer();
 app.use(function(request, response, next) {
@@ -171,9 +180,13 @@ config.cameras.forEach(function(camera){
 
 		//Listen for new socket connections
 		io.of('/' + camera.id).on('connection', function (socket) {
+			//Send a camera image
 			if (camera.image !== null) {
 				socket.emit('image', camera.image.toString("base64"));
 			}
+			
+			//Send a note about if he is awake
+			socket.emit('motion', Object.keys(motionDetection.cameras).length > 0);
 		});
 
 		//Output to file path
@@ -282,20 +295,30 @@ function updateMotionDetection(camera, detected) {
 	//We can now check for change
 	if (newDetected === true && currentDetected === false) {
 		//We are now detecting motion
-		//UPDATE SITE!
+		socket.emit('motion', true);
 		
 		//Only tweet if we haven't changed state in an hour
 		if (new Date().getTime() > motionDetection.updatedAt + (60 * 60 * 1000) ) {
 			//TWEET!
+			var awakeTexts = config.twitter.awake_text;
+			var awakeText = awakeTexts[Math.floor(Math.random()*awakeTexts.length)];
+			twitter.tweet(awakeText + " #rockycam #awake", function(data){
+				console.log("Awake tweet sent! Resonse: ", data);
+			});
 		}
 		
 	} else if (newDetected === false && currentDetected === true) {
 		//We have stopped detecting motion
-		//UPDATE!
+		socket.emit('motion', false);
 		
 		//Only tweet if we haven't changed state in 2mins
 		if (new Date().getTime() > motionDetection.updatedAt + (2 * 60 * 1000) ) {
 			//TWEET!
+			var sleepTexts = config.twitter.bed_text;
+			var sleepText = sleepTexts[Math.floor(Math.random()*sleepTexts.length)];
+			twitter.tweet(sleepText + " #rockycam #sleep", function(data){
+				console.log("Sleep tweet sent! Resonse: ", data);
+			});
 		}
 	}
 	
