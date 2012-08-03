@@ -9,3 +9,11 @@
 </div>
 
 <p>All the code is <a href="http://github.com/ollieparsley/rockycam" target="_blank">available on Github</a></p>
+
+<script>
+	var socket = io.connect('http://{{HOST}}:{{PORT}}/');
+	socket.on('awake', function(isAwake){
+		console.log("awake: ", isAwake);
+		updateAwake(isAwake);
+	});
+</script>

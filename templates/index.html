@@ -13,5 +13,8 @@
 		socket.on('image', function (imageBase64) {
 			image.src = "data:image/jpeg;base64," + imageBase64;
 		});
+		socket.on('awake', function(isAwake){
+			updateAwake(isAwake);
+		});
 	});
 </script>

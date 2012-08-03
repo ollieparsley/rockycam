@@ -2,6 +2,7 @@ var childProcess = require("child_process");
 var fs = require("fs");
 var http = require('http');
 var express = require("express");
+var zmq = require("zmq-3.0");
 
 //Load the config
 var config = require("./config.json");
@@ -186,7 +187,7 @@ config.cameras.forEach(function(camera){
 			}
 			
 			//Send a note about if he is awake
-			socket.emit('motion', Object.keys(motionDetection.cameras).length > 0);
+			socket.emit('awake', Object.keys(motionDetection.cameras).length > 0);
 		});
 
 		//Output to file path
@@ -255,14 +256,19 @@ var address = config.zeromq.protocol + '://*:' + config.zeromq.port;
 socket.bindSync(address);
 console.log("[ZMQ] Binded to " + address);
 socket.on('message', function(action, data) {
+	console.log("Received data on ZMQ socket: " + action + " --- ", JSON.parse(data.toString("utf8")));
+	
+	//Action
+	action = action.toString("utf8");
+	
 	//Decode data
-	data = JSON.parse(data);
+	data = JSON.parse(data.toString("utf8"));
 	
 	//Find camera
 	var camera = false;
 	if (data.cameraId !== undefined) {
 		config.cameras.forEach(function(cam){
-			if (cam.id == data.cameraId) {
+			if (cam.id.toString() == data.cameraId.toString()) {
 				camera = cam;
 			}
 		});
@@ -270,13 +276,18 @@ socket.on('message', function(action, data) {
 	
 	//Check the action
 	if (action == 'detection' && camera !== false) {
-		updateMotionDetection(camera, data.detection == 'start' ? true : false);
+		console.log("Detection camera ", data.detected);
+		
+		//Make sure we are over the threshold
+		if (data.detected == 'start') {
+			updateMotionDetection(camera, true);
+		} else {
+			updateMotionDetection(camera, false);
+		}
 	}
 });
 
 function updateMotionDetection(camera, detected) {
-	
-	
 	//Have we detected anything?
 	var currentDetectionCount = Object.keys(motionDetection.cameras).length;
 	var currentDetected = currentDetectionCount > 0;
@@ -292,24 +303,37 @@ function updateMotionDetection(camera, detected) {
 	var newDetectionCount = Object.keys(motionDetection.cameras).length;
 	var newDetected = newDetectionCount > 0;
 	
+	console.log("Detection: ", currentDetected, newDetected);
+	
 	//We can now check for change
 	if (newDetected === true && currentDetected === false) {
 		//We are now detecting motion
-		socket.emit('motion', true);
+		console.log("Emit to all");
+		io.sockets.emit('awake', true);
+		config.cameras.forEach(function(camera){
+			io.of('/' + camera.id).emit('awake', true);
+		})
 		
 		//Only tweet if we haven't changed state in an hour
 		if (new Date().getTime() > motionDetection.updatedAt + (60 * 60 * 1000) ) {
 			//TWEET!
 			var awakeTexts = config.twitter.awake_text;
 			var awakeText = awakeTexts[Math.floor(Math.random()*awakeTexts.length)];
-			twitter.tweet(awakeText + " #rockycam #awake", function(data){
+			twitter.tweet(awakeText + " http://" + config.http.host + "/ #rockycam #awake", function(data){
 				console.log("Awake tweet sent! Resonse: ", data);
 			});
 		}
 		
+		//Updated time
+		motionDetection.updatedAt = new Date();
+		
 	} else if (newDetected === false && currentDetected === true) {
 		//We have stopped detecting motion
-		socket.emit('motion', false);
+		console.log("Emit to all");
+		io.sockets.emit('awake', false);
+		config.cameras.forEach(function(camera){
+			io.of('/' + camera.id).emit('awake', false);
+		})
 		
 		//Only tweet if we haven't changed state in 2mins
 		if (new Date().getTime() > motionDetection.updatedAt + (2 * 60 * 1000) ) {
@@ -320,6 +344,9 @@ function updateMotionDetection(camera, detected) {
 				console.log("Sleep tweet sent! Resonse: ", data);
 			});
 		}
+		
+		//Updated time
+		motionDetection.updatedAt = new Date();
 	}
 	
 }

@@ -22,12 +22,28 @@
 		<script type="text/javascript">
 			var logo = document.getElementById("logo");
 			var closeUrl = '/images/logo_blink.png';
-			var openUrl = logo.src.toString();
+			var openUrl = '/images/logo.png';
+			var awake = false;
+			
+			function updateAwake(isAwake) {
+				awake = isAwake;
+				if (awake === false) {
+					//Close eyes
+					logo.src = closeUrl;
+				} else {
+					//Open eyes
+					logo.src = openUrl;
+				}
+			}
+			
 			function blink() {
 				logo.src = closeUrl;
-				setTimeout(function(){
-					logo.src = openUrl;
-				}, 200);
+				
+				if (awake) {
+					setTimeout(function(){
+						logo.src = openUrl;
+					}, 200);
+				}
 				
 				setTimeout(function(){
 					blink();
@@ -35,8 +51,10 @@
 				
 			}
 			
-			blink();
-			
+			//Start blinking after a second
+			setTimeout(function(){
+				blink();
+			}, 1000);
 		</script>
 		
 		<script type="text/javascript">

@@ -19,7 +19,7 @@ var address = config.zeromq.protocol + '://' + config.zeromq.host + ':' + config
 socket.connect(address);
 
 //Send the message to the mains server
-socket.send('detection', JSON.stringify({cameraId: id, detected: detected}));
+socket.send('detection', JSON.stringify({cameraId: cameraId, detected: detected}));
 
 //Set timeout
 setTimeout(function(){
