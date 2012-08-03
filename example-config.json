@@ -19,7 +19,24 @@
 		"consumer_key": "XXXX",
 		"consumer_secret": "XXXX",
 		"access_token": "XXXX",
-		"access_token_secret": "XXXX"
+		"access_token_secret": "XXXX",
+		"sleep_text": [
+			"I'm back in my cosy bed now",
+			"I'm back in my cosy home now",
+			"Back in my little house :)",
+			"I'm off to sleep again",
+			"Time to sleep some more!",
+			"Off to dream of food again",
+			"Think I should catch some zzzz's"
+		],
+		"awake_text": [
+			"Hey everyone I'm awake!",
+			"I'm awake now :)",
+			"Whats up everyone? I'm up!",
+			"I am up and my eyes are open!",
+			"I'm up, maybe time for some food",
+			"Woo guess who is up?? ME!"
+		]
 	},
 	"motion": {
 		"directory": "/tmp/motion"

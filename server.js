@@ -314,7 +314,7 @@ function updateMotionDetection(camera, detected) {
 		//Only tweet if we haven't changed state in 2mins
 		if (new Date().getTime() > motionDetection.updatedAt + (2 * 60 * 1000) ) {
 			//TWEET!
-			var sleepTexts = config.twitter.bed_text;
+			var sleepTexts = config.twitter.sleep_text;
 			var sleepText = sleepTexts[Math.floor(Math.random()*sleepTexts.length)];
 			twitter.tweet(sleepText + " #rockycam #sleep", function(data){
 				console.log("Sleep tweet sent! Resonse: ", data);
