@@ -10,6 +10,17 @@
 		"host": "rockycam.ollieparsley.com",
 		"port": 1338
 	},
+	"zeromq": {
+		"host": "127.0.0.1",
+		"port": 5678,
+		"protocol": "tcp"
+	},
+	"twitter": {
+		"consumer_key": "XXXX",
+		"consumer_secret": "XXXX",
+		"access_token": "XXXX",
+		"access_token_secret": "XXXX"
+	},
 	"motion": {
 		"directory": "/tmp/motion"
 	},
