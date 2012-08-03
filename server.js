@@ -3,6 +3,7 @@ var fs = require("fs");
 var http = require('http');
 var express = require("express");
 var zmq = require("zmq-3.0");
+var start = new Date().getTime();
 
 //Load the config
 var config = require("./config.json");
@@ -172,6 +173,8 @@ config.cameras.forEach(function(camera){
 		motionConfig = motionConfig.replace(/\{\{HEIGHT\}\}/ig, camera.height);
 		motionConfig = motionConfig.replace(/\{\{FPS\}\}/ig, camera.fps);
 		motionConfig = motionConfig.replace(/\{\{PALETTE\}\}/ig, camera.palette);
+		motionConfig = motionConfig.replace(/\{\{START_SCRIPT\}\}/ig, 'node ' + __dirname + '/detection.js ' + camera.id + ' start');
+		motionConfig = motionConfig.replace(/\{\{STOP_SCRIPT\}\}/ig, 'node ' + __dirname + '/detection.js ' + camera.id + ' stop');
 
 		//Set a camera image holding
 		camera.image = null;
@@ -210,15 +213,14 @@ config.cameras.forEach(function(camera){
 				});
 				camera.process.stderr.on("data", function(data){
 					//Regex
-					var regex = new RegExp("(" + directory.toString().replace("/", "\/") + "\/)(.*)(\.jpg)" ,"igm");
-
+					var regex = new RegExp("(File of type )(1)(.*)((" + directory.toString().replace("/", "\/") + "\/)(.*)(\.jpg))" ,"igm");
 					try {
 						var matches = regex.exec(data.toString("utf8"));
 						
 						if (matches !== null && matches.length !== undefined && matches.length > 0) {
 
 							//Image path
-							var imagePath = matches[0];
+							var imagePath = matches[4];
 
 							//Read the file
 							fs.readFile(imagePath, function(error, data){
@@ -229,7 +231,7 @@ config.cameras.forEach(function(camera){
 									camera.image = data;
 
 									//Send to client
-									io.of('/' + camera.id).emit('image', camera.image.toString("base64"));
+									io.of('/' + camera.id).volatile.emit('image', camera.image.toString("base64"));
 
 									//Delete the original file
 									fs.unlinkSync(imagePath);
@@ -275,7 +277,7 @@ socket.on('message', function(action, data) {
 	}
 	
 	//Check the action
-	if (action == 'detection' && camera !== false) {
+	if (action == 'detection' && camera !== false && ((new Date().getTime() - start) > (60 * 1000))) {
 		console.log("Detection camera ", data.detected);
 		
 		//Make sure we are over the threshold
@@ -309,9 +311,9 @@ function updateMotionDetection(camera, detected) {
 	if (newDetected === true && currentDetected === false) {
 		//We are now detecting motion
 		console.log("Emit to all");
-		io.sockets.emit('awake', true);
+		io.sockets.volatile.emit('awake', true);
 		config.cameras.forEach(function(camera){
-			io.of('/' + camera.id).emit('awake', true);
+			io.of('/' + camera.id).volatile.emit('awake', true);
 		})
 		
 		//Only tweet if we haven't changed state in an hour
@@ -330,9 +332,9 @@ function updateMotionDetection(camera, detected) {
 	} else if (newDetected === false && currentDetected === true) {
 		//We have stopped detecting motion
 		console.log("Emit to all");
-		io.sockets.emit('awake', false);
+		io.sockets.volatile.emit('awake', false);
 		config.cameras.forEach(function(camera){
-			io.of('/' + camera.id).emit('awake', false);
+			io.of('/' + camera.id).volatile.emit('awake', false);
 		})
 		
 		//Only tweet if we haven't changed state in 2mins

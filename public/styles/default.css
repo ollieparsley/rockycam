@@ -108,7 +108,7 @@ div.cameraSurround div.live{
 	color:#ff0000;
 	font-weight:bold;
 	top:11px;
-	right:0px;
+	left:15px;
 	text-transform:uppercase;
 	font-size:36px;
 	-webkit-text-stroke-width: 2px;
@@ -137,7 +137,7 @@ div.cameraSurround div.live{
 	-webkit-text-stroke-width: 1px;
    -webkit-text-stroke-color: #ffffff;
 	top:3px;
-	right:5px;
+	left:5px;
 }
    
 #content p {

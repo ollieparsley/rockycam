@@ -18,16 +18,14 @@ var socket = zmq.createSocket('push');
 var address = config.zeromq.protocol + '://' + config.zeromq.host + ':' + config.zeromq.port;
 socket.connect(address);
 
-//Send the message to the mains server
-socket.send('detection', JSON.stringify({cameraId: cameraId, detected: detected}));
-
-//Set timeout
 setTimeout(function(){
+	//Send the message to the mains server
+	socket.send('detection', JSON.stringify({cameraId: cameraId, detected: detected}));
 	
-	//Close the socket
-	socket.close();
-	
-	//Make sure this process dies
-	process.exit();
-	
-}, 200);
+	//Set timeout
+	setTimeout(function(){
+		//Kill
+		process.kill(process.pic, "SIGKILL");
+	}, 500);
+}, 300);
+
