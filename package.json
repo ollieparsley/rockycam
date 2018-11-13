@@ -24,7 +24,7 @@
 		"hootware"
 	],
 	"dependencies" : {
-		"socket.io": "0.9.5",
+		"socket.io": "0.9.7",
 		"express": "*",
 		"connect": "*",
 		"zeromq": "git+ssh://git@github.com:ollieparsley/zeromq.node.git",
